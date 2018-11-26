@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+
+'''
+    Flowctl part of TheFlow
+    Copyright (C) 2018  williamflow
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+'''
+
+import sys
+from Config import *
+from Database import Database
+import traceback
+
+database = Database(host=HOST, user=USER, passwd=PASSWD, database=DATABASE)
+WEBADDRESS = "tcp://*:"+PORT
+
+def parseNode(node):
+    node = node.split(".")
+    if node[0] == "web":
+        node = [WEBADDRESS]+node[1:]
+    elif node[0] == "local":
+        node = [ADDRESS]+node[1:]
+    else:
+        node = [ADDRESS]+node
+    return ".".join(node)
+        
+try:
+    cmd = sys.argv[1]
+    if cmd == "connect":
+        try:
+            nodeout = parseNode(sys.argv[2])
+            nodein = parseNode(sys.argv[3])
+            if len(database.select(CONNTABLE, nodeout=nodeout, nodein=nodein)) == 0:
+                database.insert(CONNTABLE, nodeout=nodeout, nodein=nodein)
+        except:
+            print("Usage: "+sys.argv[0]+" connect node_out node_in")
+            traceback.print_exc()
+    elif cmd == "disconnect":
+        try:
+            nodeout = parseNode(sys.argv[2])
+            nodein = parseNode(sys.argv[3])
+            database.delete(CONNTABLE, nodeout=nodeout, nodein=nodein)
+        except:
+            print("Usage: "+sys.argv[0]+" disconnect node_out node_in")
+            traceback.print_exc()
+    elif cmd == "remove":
+        try:
+            node = parseNode(sys.argv[2])
+            database.delete(CONNTABLE, nodeout=node)
+            database.delete(CONNTABLE, nodein=node)
+        except:
+            print("Usage: "+sys.argv[0]+" remove node")
+            traceback.print_exc()
+    elif cmd == "listconnections":
+        try:
+            for nodeout, nodein in database.select(CONNTABLE, "nodeout", "nodein"):
+                print(nodeout+" "+nodein)
+        except:
+            print("Usage "+sys.argv[0]+" listconnections")
+            traceback.print_exc()
+    else:
+        print("Unrecognized Command")
+except:
+    print("Usage: "+sys.argv[0]+" [connect|disconnect|remove|listconnections]")
