@@ -13,6 +13,7 @@ EOF
 $ cp Config.py.sample Config.py
 ```
 Create a database and a table editable by the user
+
 Then fill in Config.py with the credentials
 ## Test TheFlow
 Create connections:
@@ -30,7 +31,8 @@ $ python3
 >>> node = zmqDealer("nodeb")
 >>> node.receive()
 ```
-This should print ['data']
+This should print ['data'] after Terminal 3 is done
+
 Terminal 3:
 ```
 $ python3
