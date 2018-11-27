@@ -60,15 +60,12 @@ class Flow:
         self.interfaces[address] = interface
         threading.Thread(target=self.interfaces[address].receive).start()
         
-    def addDatabaseCallback(self, callback, *args, **kwargs):
-        self.databaseCallbacks.append(partial(callback, *args, **kwargs))
+    def addDatabase(self, host, user, passwd, database, table):
+        self.databaseCallbacks.append(partial(self.databaseSelect, host, user, passwd, database, table))
         
-    def databaseSelect(self, database, table, node):
-        return database.select(table, "nodein", nodeout=node)
-        
-    def database(self, host, user, passwd, database, table):
+    def databaseSelect(self, host, user, passwd, database, table, node):
         database = Database(host, user, passwd, database)
-        self.addDatabaseCallback(self.databaseSelect, database, table)
+        return database.select(table, "nodein", nodeout=node)
 
 class zmqRouter:
     def __init__(self, address):
@@ -191,7 +188,7 @@ class zmqStreamHttp:
 
 if __name__ == "__main__":
     flow = Flow()
-    flow.database(HOST, USER, PASSWD, DATABASE, CONNTABLE)
+    flow.addDatabase(HOST, USER, PASSWD, DATABASE, CONNTABLE)
     flow.addInterface(zmqRouter(ADDRESS), ADDRESS)
     WEBADDRESS = "tcp://*:"+str(PORT)
     flow.addInterface(zmqStreamHttp(WEBADDRESS), WEBADDRESS)
