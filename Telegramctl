@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+
+from zmqDealer import zmqDealer
+import traceback
+import Flowctl
+
+class Telegramctl(zmqDealer):
+    def __init__(self, identity, graph):
+        zmqDealer.__init__(self, identity)
+        while True:
+            data = self.receive()
+            cmd = data[-1].split(" ")
+            try:
+                if cmd[0] == "/connect":
+                    Flowctl.connect(cmd[1], cmd[2])
+                elif cmd[0] == "/disconnect":
+                    Flowctl.disconnect(cmd[1], cmd[2])
+                elif cmd[0] == "/remove":
+                    Flowctl.remove(cmd[1])
+                elif cmd[0] == "/listconnections":
+                    ret = Flowctl.listconnections()
+                    if ret is not False:
+                        self.send(data[:-1]+[ret])
+                else:
+                    print(data[:-2]+[graph]+data[-2:])
+                    self.send(data[:-2]+[graph]+data[-2:])
+            except:
+                traceback.print_exc()
+
+if __name__ == "__main__":
+    Telegramctl("telegramctl", "parse")

@@ -90,7 +90,7 @@ class zmqRouter:
         packet = []
         for part in node+data:
             packet.append(str(part).encode("utf-8"))
-        print("SENT ROUTER: ", str(data))
+        print("SENT ROUTER: ", str(node+data))
         self.connection.send_multipart(packet)
         
 class zmqStreamHttp:
