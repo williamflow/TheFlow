@@ -3,6 +3,7 @@
 from zmqDealer import zmqDealer
 import traceback
 import Flowctl
+from Config import TELEGRAMGRAPH
 
 class Telegramctl(zmqDealer):
     def __init__(self, identity, graph):
