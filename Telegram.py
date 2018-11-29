@@ -5,6 +5,7 @@ from telegram.ext import Updater, CommandHandler, Filters, MessageHandler, BaseF
 from Config import TOKEN
 import threading
 import ast
+import traceback
 
 class Telegram:
     def __init__(self, token, identity):
@@ -17,17 +18,28 @@ class Telegram:
         self.update = False
         
     def callbackout(self, bot, update):
-        print("Telegram out: ", str(update))
-        self.node.send([str(update)])
+        try:
+            updateid = update.update_id
+            text = update.message.text
+            self.node.send([updateid, "text", text])
+            chatid = update.message.chat.id
+            self.node.send([updateid, "chatid", chatid])
+            fromid = update.message.from_user.id
+            self.node.send([updateid, "fromid", fromid])
+            admins = []
+            if update.message.chat.id != update.message.from_user.id:
+                for admin in self.updater.bot.get_chat_administrators(chatid):
+                    admins.append(str(admin.user.id))
+                admins = ",".join(admins)
+                self.node.send([updateid, "admins", admins])
+        except:
+            traceback.print_exc()
         
     def callbackin(self):
         while True:
             data = self.node.receive()
             print("Telegram in: ", data)
-            update = ast.literal_eval(data[-2])
-            text = data[-1]
-            self.updater.send_message(update["message"]["chat"]["id"], text)
-        
+            self.bot.send_message(data[-2], data[-1])
         
 class FilterNull(BaseFilter):
     def filter(self, message):

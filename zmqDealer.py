@@ -18,7 +18,6 @@
 
 import zmq
 import threading
-from Config import COMPONENTADDRESS
 
 class zmqDealer:
     def __init__(self, identity):
