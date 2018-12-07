@@ -20,10 +20,14 @@ import mysql.connector
 
 class Database:
     def __init__(self, host, user, passwd, database):
-        self.database = mysql.connector.connect(host=host, user=user, passwd=passwd, database=database)
-        self.cursor = self.database.cursor()
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.database = database
     
     def select(self, table, *args, **kwargs):
+        database = mysql.connector.connect(host=self.host, user=self.user, passwd=self.passwd, database=self.database)
+        cursor = database.cursor()
         query = "SELECT "
         if len(args) == 0:
             query = query + "* "
@@ -36,9 +40,9 @@ class Database:
             for col in kwargs:
                 where.append(col + "='" + str(kwargs[col]) + "'")
             query = query + " AND ".join(where)
-        self.cursor.execute(query)
+        cursor.execute(query)
         ret = []
-        for row in self.cursor.fetchall():
+        for row in cursor.fetchall():
             if len(row)==1:
                 ret.append(row[0])
             else:
@@ -46,6 +50,8 @@ class Database:
         return ret
         
     def insert(self, table, **kwargs):
+        database = mysql.connector.connect(host=self.host, user=self.user, passwd=self.passwd, database=self.database)
+        cursor = database.cursor()
         query="INSERT INTO "+table+" ("
         cols=[]
         values=[]
@@ -53,24 +59,28 @@ class Database:
             cols.append(col)
             values.append("'"+str(kwargs[col])+"'")
         query = query+ ", ".join(cols) +") VALUES ("+ ", ".join(values)+ ")"
-        self.cursor.execute(query)
-        self.database.commit()
+        cursor.execute(query)
+        database.commit()
         
     def update(self, table, **kwargs):
+        database = mysql.connector.connect(host=self.host, user=self.user, passwd=self.passwd, database=self.database)
+        cursor = database.cursor()
         query = "UPDATE "+table+" SET "
         for col in kwargs:
             if col == "where":
                 query = query + "WHERE "
             else:
                 query = query + col + " = '" + str(kwargs[col]) + "' "
-        self.cursor.execute(query)
-        self.database.commit()
+        cursor.execute(query)
+        database.commit()
         
     def delete(self, table, **kwargs):
+        database = mysql.connector.connect(host=self.host, user=self.user, passwd=self.passwd, database=self.database)
+        cursor = database.cursor()
         query = "DELETE FROM "+table+" WHERE "
         where = []
         for col in kwargs:
             where.append(col + " = '" + kwargs[col] + "'")
         query = query + " AND ".join(where)
-        self.cursor.execute(query)
-        self.database.commit()
+        cursor.execute(query)
+        database.commit()
