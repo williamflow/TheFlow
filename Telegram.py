@@ -12,7 +12,7 @@ import Flowctl
 class Telegram:
     def __init__(self, token, identity):
         self.identity = identity
-        self.database = Database(HOST, USER, PASSWD, DATABASETELEGRAM)
+        self.database = Database(HOST, USER, PASSWD, DATABASE)
         self.node = zmqDealer(identity)
         self.updater = Updater(token=token)
         self.bot = self.updater.bot
@@ -33,7 +33,7 @@ class Telegram:
                 if text[0] == "/listconnections":
                     chats = self.getChats(fromid)
                     ret = ""
-                    for connection in self.database.select("connection", "chatout", "nodeout", "chatin", "nodein"):
+                    for connection in self.database.select(CONNTELEGRAM, "chatout", "nodeout", "chatin", "nodein"):
                         if connection[0] in chats and connection[2] in chats:
                             nodein = connection[1].split(".")
                             nodeout = connection[3].split(".")
@@ -49,12 +49,12 @@ class Telegram:
                         self.send(chatid, "Command avaible only in group chats")
                     elif fromid not in [x.user.id for x in self.bot.get_chat_administrators(chatid)]:
                         self.send(chatid, "Only admins can use this command")
-                    elif text[1] in self.database.select("chats", "name"):
+                    elif text[1] in self.database.select(CHATSTABLE, "name"):
                         self.send(chatid, "This name has already been used")
-                    elif chatid in self.database.select("chats", "chat"):
+                    elif chatid in self.database.select(CHATSTABLE, "chat"):
                         self.send(chatid, "You have already done this action")
                     else:
-                        self.database.insert("chats", chat=chatid, name=text[1], admin=fromid)
+                        self.database.insert(CHATSTABLE, chat=chatid, name=text[1], admin=fromid)
                         self.send(chatid, "You joined the Flow!")
                 else:
                     self.flow(update)
@@ -69,7 +69,7 @@ class Telegram:
                     if nodein == False:
                         self.send(chatid, "Can't find chat "+text[2])
                         return False
-                    self.database.insert("connection", chatout=chatout, nodeout=nodeout, chatin=chatin, nodein=nodein)
+                    self.database.insert(CONNTELEGRAM, chatout=chatout, nodeout=nodeout, chatin=chatin, nodein=nodein)
                     Flowctl.connect(nodeout, nodein)
                     self.send(chatid, "Connected")
                 elif text[0] == "/disconnect":
@@ -82,7 +82,7 @@ class Telegram:
                     if nodein == False:
                         self.send(chatid, "Can't find chat "+text[2])
                         return False
-                    self.database.delete("connection", chatout=chatout, nodeout=nodeout, chatin=chatin, nodein=nodein)
+                    self.database.delete(CONNTELEGRAM, chatout=chatout, nodeout=nodeout, chatin=chatin, nodein=nodein)
                     Flowctl.disconnect(nodeout, nodein)
                     self.send(chatid, "Disconnected")
                 else:
@@ -100,14 +100,24 @@ class Telegram:
     def callbackin(self):
         while True:
             data = self.node.receive()
-            print(data)
-            self.send(data[0], data[1])
+            if len(data) > 2:
+                if data[-2] == "text":
+                    self.send(data[-3], data[-1])
+                elif data[-2] == "image":
+                    self.sendphoto(data[-3], data[-1])
     
     def send(self, chatid, message):
         self.bot.send_message(int(chatid), str(message))
         
+    def sendphoto(self, chatid, filename):
+        try:
+            self.bot.send_photo(int(chatid), open(str(filename), "rb"))
+            return True
+        except:
+            return False
+        
     def getChats(self, fromid):
-        result = self.database.select("chats", "chat", "name", admin=fromid)
+        result = self.database.select(CHATSTABLE, "chat", "name", admin=fromid)
         chats = {}
         for row in result:
             chats[row[0]] = row[1]

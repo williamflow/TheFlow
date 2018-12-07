@@ -40,7 +40,7 @@ class Flow:
         self.databaseCallbacks = []
     
     def route(self, data):
-        i = len(data)-1
+        i = len(data)
         f=True
         while i>0 and f:
             for select in self.databaseCallbacks:
