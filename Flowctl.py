@@ -19,67 +19,32 @@
 '''
 
 import sys
-from Config import *
+from Config import HOST, USER, PASSWD, DATABASE, CONNTABLE
 from Database import Database
 import traceback
 
-WEBADDRESS = "tcp://*:"+PORT
-
 def connect(nodeout, nodein):
     database = Database(host=HOST, user=USER, passwd=PASSWD, database=DATABASE)
-    try:
-        nodeout = parseNode(nodeout)
-        nodein = parseNode(nodein)
-        if len(database.select(CONNTABLE, nodeout=nodeout, nodein=nodein)) == 0:
-            database.insert(CONNTABLE, nodeout=nodeout, nodein=nodein)
-    except:
-        print("Usage: flowctl connect node_out node_in")
-        traceback.print_exc()
+    if len(database.select(CONNTABLE, nodeout=nodeout, nodein=nodein)) == 0:
+        database.insert(CONNTABLE, nodeout=nodeout, nodein=nodein)
 
 def disconnect(nodeout, nodein):
     database = Database(host=HOST, user=USER, passwd=PASSWD, database=DATABASE)
-    try:
-        nodeout = parseNode(nodeout)
-        nodein = parseNode(nodein)
-        database.delete(CONNTABLE, nodeout=nodeout, nodein=nodein)
-    except:
-        print("Usage: flowctl disconnect node_out node_in")
-        traceback.print_exc()
+    database.delete(CONNTABLE, nodeout=nodeout, nodein=nodein)
     
 def remove(node):
     database = Database(host=HOST, user=USER, passwd=PASSWD, database=DATABASE)
-    try:
-        node = parseNode(node)
-        database.delete(CONNTABLE, nodeout=node)
-        database.delete(CONNTABLE, nodein=node)
-    except:
-        print("Usage: flowctl remove node")
-        traceback.print_exc()
+    database.delete(CONNTABLE, nodeout=node)
+    database.delete(CONNTABLE, nodein=node)
     
 def listconnections():
     database = Database(host=HOST, user=USER, passwd=PASSWD, database=DATABASE)
-    try:
-        ret = ""
-        for nodeout, nodein in database.select(CONNTABLE, "nodeout", "nodein"):
-            print(nodeout+" "+nodein)
-            ret = ret + nodeout+" "+nodein+"\n"
-        return ret
-    except:
-        print("Usage flowctl listconnections")
-        traceback.print_exc()
-        return False
+    ret = ""
+    for nodeout, nodein in database.select(CONNTABLE, "nodeout", "nodein"):
+        print(nodeout+" "+nodein)
+        ret = ret + nodeout+" "+nodein+"\n"
+    return ret
         
-
-def parseNode(node):
-    node = node.split(".")
-    if node[0] == "web":
-        node = [WEBADDRESS]+node[1:]
-    elif node[0] == "local":
-        node = [ADDRESS]+node[1:]
-    else:
-        node = [ADDRESS]+node
-    return ".".join(node)
-
 if __name__ == "__main__":
     try:
         cmd = sys.argv[1]
@@ -94,4 +59,8 @@ if __name__ == "__main__":
         else:
             print("Unrecognized Command")
     except:
-        print("Usage: "+sys.argv[0]+" [connect|disconnect|remove|listconnections]")
+        print("Usage: "+sys.argv[0]+"\n"+
+              "listconnections\n"+
+              "connect nodeout nodein\n"+
+              "disconnect nodeout nodein\n"+
+              "remove node")

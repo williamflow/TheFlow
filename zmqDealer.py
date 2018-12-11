@@ -17,13 +17,13 @@
 '''
 
 import zmq
-import threading
+from Config import DEALERADDRESS
 
 class zmqDealer:
     def __init__(self, identity):
         self.connection = zmq.Context().socket(zmq.DEALER)
         self.connection.setsockopt(zmq.IDENTITY, identity.encode("utf-8"))
-        self.connection.connect("tcp://localhost:5556")
+        self.connection.connect(DEALERADDRESS)
         
     def receive(self):
         packet = self.connection.recv_multipart()

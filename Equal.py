@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 '''
-    Tarot part of TheFlow
+    IfText part of TheFlow
     Copyright (C) 2018  williamflow
 
     This program is free software: you can redistribute it and/or modify
@@ -19,17 +19,16 @@
 '''
 
 from zmqDealer import zmqDealer
-from random import randint
 
-class Tarot(zmqDealer):
+class Equal(zmqDealer):
     def __init__(self, identity):
         zmqDealer.__init__(self, identity)
         while True:
             data = self.receive()
-            n = randint(0, 155)
-            print("SENT CARD")
-            self.send(data[:-1]+["deck/"+str(n)+".jpg"])
+            print(data[-3:])
+            if len(data) > 2 and data[-1] == data[-2]:
+                print("IS EQUAL")
+                self.send(data)
 
 if __name__ == "__main__":
-    Tarot("tarot")
-    
+    Equal("equal")
