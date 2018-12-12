@@ -1,5 +1,7 @@
+#!/usr/bin/python3
+
 '''
-    zmqDealer part of TheFlow
+    Tarot part of TheFlow
     Copyright (C) 2018  williamflow
 
     This program is free software: you can redistribute it and/or modify
@@ -16,24 +18,18 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import zmq
-from Config import DEALERADDRESS
+from zmqDealer import zmqDealer
+from random import randint
 
-class zmqDealer:
+class Tarot(zmqDealer):
     def __init__(self, identity):
-        self.connection = zmq.Context().socket(zmq.DEALER)
-        self.connection.setsockopt(zmq.IDENTITY, identity.encode("utf-8"))
-        self.connection.connect(DEALERADDRESS)
-        
-    def receive(self):
-        packet = self.connection.recv_multipart()
-        data = []
-        for part in packet:
-            data.append(part.decode("ascii"))
-        return data
+        zmqDealer.__init__(self, identity)
+        while True:
+            data = self.receive()
+            n = randint(0, 155)
+            print("SENT CARD")
+            self.send(data[:-1]+["deck/"+str(n)+".jpg"])
+
+if __name__ == "__main__":
+    Tarot("tarot")
     
-    def send(self, data):
-        packet = []
-        for part in data:
-            packet.append(str(part).encode("utf-8"))
-        self.connection.send_multipart(packet)

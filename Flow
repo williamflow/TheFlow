@@ -19,176 +19,42 @@
 '''
 
 import zmq
-import sys
-import uuid
-import traceback
-from functools import partial
-import threading
 from Database import Database
-from Config import *
-from queue import Queue
-
-class BadRequest(Exception):
-    pass
-
-class ConnectionLost(Exception):
-    pass
+from Config import HOST, USER, PASSWD, DATABASE, CONNTABLE, ROUTERADDRESS
 
 class Flow:
-    def __init__(self):
-        self.interfaces = {}
-        self.databaseCallbacks = []
-    
+    def __init__(self, host, user, passwd, database, table, address):
+        self.database = Database(host, user, passwd, database)
+        self.table = table
+        self.connection = zmq.Context().socket(zmq.ROUTER)
+        self.connection.bind(address)
+        while True:
+            data = self.receive()
+            self.route(data)
+        
+    def receive(self):
+        packet = self.connection.recv_multipart()
+        data = []
+        for part in packet:
+            data.append(part.decode("ascii"))
+        print("RECEIVED: ", str(data))
+        return data
+        
     def route(self, data):
         i = len(data)-1
-        f=True
-        while i>0 and f:
-            for select in self.databaseCallbacks:
-                for nodein in select(".".join(data[:i])):
-                    node = nodein.split(".")
-                    if True:
-                        self.interfaces[node[0]].send(node[1:], data[i:])
-                        f=False
-                    else:
-                        print("Unrecognized Address: "+node[0])
+        while i>0:
+            for nodein in self.database.select(self.table, "nodein", nodeout=".".join(data[:i])):
+                node = nodein.split(".")
+                self.send(node+data[i:])
+                i = 0
             i = i-1
-        if f:
-            print("NODE NOT CONNECTED", data)
     
-    def addInterface(self, interface, address):
-        interface.callback = self.route
-        self.interfaces[address] = interface
-        threading.Thread(target=self.interfaces[address].receive).start()
-        
-    def addDatabase(self, host, user, passwd, database, table):
-        self.databaseCallbacks.append(partial(self.databaseSelect, host, user, passwd, database, table))
-        
-    def databaseSelect(self, host, user, passwd, database, table, node):
-        database = Database(host, user, passwd, database)
-        return database.select(table, "nodein", nodeout=node)
-
-class zmqRouter:
-    def __init__(self, address):
-        self.address = address
-        self.connection = zmq.Context().socket(zmq.ROUTER)
-        self.connection.bind(self.address)
-    
-    def receive(self):
-        while True:
-            packet = self.connection.recv_multipart()
-            data = []
-            for part in packet:
-                data.append(part.decode("ascii"))
-            data = [self.address]+data
-            print("RECEIVED ROUTER: ", str(data))
-            self.callback(data)
-    
-    def send(self, node, data):
+    def send(self, data):
         packet = []
-        for part in node+data:
+        for part in data:
             packet.append(str(part).encode("utf-8"))
-        print("SENT ROUTER: ", str(node+data))
+        print("SENT ROUTER: ", str(data))
         self.connection.send_multipart(packet)
-        
-class zmqStreamHttp:
-    def __init__(self, address):
-        self.address = address
-        self.connection = zmq.Context().socket(zmq.STREAM)
-        self.connection.bind(self.address)
-        self.clients = {}
-        
-    def addRequest(self, client, request):
-        if not hasattr(self.clients, client):
-            self.clients[client] = []
-        self.clients[client].append(request)
-    
-    def getRequest(self, client):
-        print(self.clients[client])
-        while len(self.clients[client]) == 0:
-            pass
-        request = self.clients[client][0]
-        self.clients[client] = self.clients[client][1:]
-        return request
-        
-    def receive(self):
-        while True:
-            request_id, msg = self.connection.recv_multipart()
-            if msg == b'':
-                continue
-            chunks = []
-            try:
-                request, first_chunk = msg.split(b'\r\n\r\n', 1)
-                if first_chunk:
-                    chunks.append(first_chunk)
-                first_line, header_lines = request.split(b'\r\n', 1)
-                verb, path, proto = first_line.decode('utf8').split()
-                headers = {}
-                for header in header_lines.split(b'\r\n'):
-                    header = header.split(b':')
-                    headers[header[0].decode('ascii')] = header[1].decode('ascii')
-                if headers.get('expect', '').lower() == '100-continue':
-                    if 'Content-Length' not in headers:
-                        self.connection.send_multipart([
-                            request_id, b'HTTP/1.1 400 (Bad Request)\r\n\r\n',
-                            request_id, b'',
-                        ])
-                        msg = 1
-                        while msg != b'':
-                            _, msg = self.connection.recv_multipart()
-                        raise BadRequest("Only support specified-length requests")
-                    connection.send_multipart([request_id, b'HTTP/1.1 100 (Continue)\r\n\r\n'], zmq.SNDMORE)
-                    content_length = int(headers['Content-Length'])
-                    while sum(len(chunk) for chunk in chunks) < content_length:
-                        id_, msg = self.connection.recv_multipart()
-                        if msg == b'':
-                            raise ConnectionLost("Disconnected")
-                        if id_ != request_id:
-                            raise ConnectionLost("Received data from wrong ID: %s != %s" % (id_, request_id))
-                        chunks.append(msg)
-                body = b''.join(chunks)
-            except BadRequest as e:
-                print("Bad Request: %s" % e)
-            except ConnectionLost as e:
-                print("Connection Lost: %s" % e)
-            except Exception:
-                print("Failed to handle request", msg)
-                traceback.print_exc()
-                self.connection.send_multipart([
-                    request_id, b'HTTP/1.1 500 (OK)\r\n\r\n',
-                    request_id, b''])
-            else:
-                if path == "/":
-                    with open("Flowweb.html","r") as index:
-                        clientid = str(uuid.uuid4())
-                        self.connection.send_multipart([
-                            request_id, b'HTTP/1.1 200 (OK)\r\n\r\n'+index.read().replace("__FLOWNAME__", clientid).encode("utf-8")+b'\r\n\r\n',
-                            request_id, b''
-                        ])
-                else:
-                    data = path[1:].split(".")
-                    client = data[-1]
-                    self.addRequest(client, request_id)
-                    data = [self.address]+data+[body.decode("ascii")]
-                    print("RECEIVED WEB: ",str(data))
-                    self.callback(data)
-    
-    def send(self, node, data):
-        request_id = self.getRequest(data[0])
-        print("REQUEST OUT: "+str(request_id))
-        if request_id:
-            node = ".".join(node+data[1:-1])
-            data = data[-1]
-            self.connection.send_multipart([
-                request_id, b'HTTP/1.1 200 (OK)\r\n\r\n'+node.encode('utf-8')+b'\r\n'+data.encode("utf-8")+b'\r\n\r\n',
-                request_id, b''
-            ])
-            print("SENT WEB: ", str(node+"."+data))
-        else:
-            print("NO REQUESTS AVAIBLE FOR "+data[0])
 
 if __name__ == "__main__":
-    flow = Flow()
-    flow.addDatabase(HOST, USER, PASSWD, DATABASE, CONNTABLE)
-    flow.addInterface(zmqRouter(ADDRESS), ADDRESS)
-    WEBADDRESS = "tcp://*:"+str(PORT)
-    flow.addInterface(zmqStreamHttp(WEBADDRESS), WEBADDRESS)
+    flow = Flow(HOST, USER, PASSWD, DATABASE, CONNTABLE, ROUTERADDRESS)

@@ -1,5 +1,5 @@
 '''
-    zmqDealer part of TheFlow
+    IfText part of TheFlow
     Copyright (C) 2018  williamflow
 
     This program is free software: you can redistribute it and/or modify
@@ -16,24 +16,17 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import zmq
-from Config import DEALERADDRESS
+from zmqDealer import zmqDealer
 
-class zmqDealer:
+class IfText(zmqDealer):
     def __init__(self, identity):
-        self.connection = zmq.Context().socket(zmq.DEALER)
-        self.connection.setsockopt(zmq.IDENTITY, identity.encode("utf-8"))
-        self.connection.connect(DEALERADDRESS)
-        
-    def receive(self):
-        packet = self.connection.recv_multipart()
-        data = []
-        for part in packet:
-            data.append(part.decode("ascii"))
-        return data
-    
-    def send(self, data):
-        packet = []
-        for part in data:
-            packet.append(str(part).encode("utf-8"))
-        self.connection.send_multipart(packet)
+        zmqDealer.__init__(self, identity)
+        while True:
+            data = self.receive()
+            print(data)
+            if len(data) > 2 and data[-1] == data[-2]:
+                self.send(data[:-1])
+                print("sent", data[:-1])
+
+if __name__ == "__main__":
+    IfText("if")
