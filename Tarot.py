@@ -28,7 +28,7 @@ class Tarot(zmqDealer):
             data = self.receive()
             n = randint(0, 155)
             print("SENT CARD")
-            self.send(data[:-1]+["deck/"+str(n)+".jpg"])
+            self.send(data[:-1]+[+str(n)+".jpg"])
 
 if __name__ == "__main__":
     Tarot("tarot")

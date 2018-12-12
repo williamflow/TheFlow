@@ -1,0 +1,16 @@
+[Unit]
+Description=The Flow
+After=network.target
+
+[Service]
+RestartSec=2s
+Type=simple
+User=flow
+Group=flow
+WorkingDirectory=/home/flow/TheFlow
+ExecStart=/home/flow/TheFlow/start_all.sh
+Restart=always
+Environment=USER=flow HOME=/home/flow
+
+[Install]
+WantedBy=multi-user.target
