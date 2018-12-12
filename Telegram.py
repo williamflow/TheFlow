@@ -25,6 +25,7 @@ class Telegram:
         self.updater.start_polling()
         
     def callbackout(self, bot, update):
+        print(update)
         try:
             text = update.message.text.split(" ")
             chatid = update.message.chat.id
@@ -96,7 +97,7 @@ class Telegram:
             else:
                 self.flow(update)
         except:
-            traceback.print_exc()
+            self.flow()
         
     def flow(self, update):
         chatid = update.message.chat.id
@@ -113,14 +114,14 @@ class Telegram:
             self.node.send([chatid, "video", mvvideo])
             return
         except:
-            return
+            pass
         try:
             text = update.message.text
             print("TO FLOW: ", chatid, " text ", text)
             self.node.send([chatid, "text", text])
             return
         except:
-            return
+            pass
     
     def callbackin(self):
         while True:

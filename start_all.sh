@@ -2,25 +2,25 @@
 FLOWDIR=/home/flow/TheFlow
 case "$1" in
     "start")
-        $FLOWDIR/Flow & >stdout.log 2>stderr.log
+        $FLOWDIR/Flow >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/Equal.py  & >stdout.log 2>stderr.log
+        $FLOWDIR/Equal.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/FFMPEG.py  & >stdout.log 2>stderr.log
+        $FLOWDIR/FFMPEG.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/Link.py & >stdout.log 2>stderr.log
+        $FLOWDIR/Link.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/Tarot.py & >stdout.log 2>stderr.log
+        $FLOWDIR/Tarot.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/Youtube.py & >stdout.log 2>stderr.log
+        $FLOWDIR/Youtube.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
-        $FLOWDIR/Telegram.py & >stdout.log 2>stderr.log
+        $FLOWDIR/Telegram.py >>stdout.log 2>>stderr.log &
         echo $! >> $FLOWDIR/pids
 #        disown
     ;;
