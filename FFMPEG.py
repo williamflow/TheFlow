@@ -15,8 +15,9 @@ class FFMPEG(zmqDealer):
                     extensions[ids] = data[-1]
                 elif data[-2] == "convert" and hasattr(self.extensions, ids):
                     try:
-                        video = data[-1]+self.extensions[ids]
-                        ret = os.system("ffmpeg -i 'data/"+data[-1]+"' -codec copy '"+video+"'")
+                        videoin = os.path.basename(data[-1])
+                        video = videoin+self.extensions[ids]
+                        ret = os.system("ffmpeg -i 'data/"+videoin+"' -codec copy '"+video+"'")
                         if int(ret) == 0:
                             mvvideo=video
                             i=0
