@@ -36,7 +36,10 @@ class Flow:
         packet = self.connection.recv_multipart()
         data = []
         for part in packet:
-            data.append(part.decode("ascii"))
+            try:
+                data.append(part.decode("ascii"))
+            except:
+                data.append("")
         print("RECEIVED: ", str(data))
         return data
         
@@ -52,7 +55,10 @@ class Flow:
     def send(self, data):
         packet = []
         for part in data:
-            packet.append(str(part).encode("utf-8"))
+            try:
+                packet.append(str(part).encode("utf-8"))   
+            except:
+                packet.append("".encode("utf-8"))
         print("SENT ROUTER: ", str(data))
         self.connection.send_multipart(packet)
 

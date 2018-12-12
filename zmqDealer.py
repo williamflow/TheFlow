@@ -29,11 +29,17 @@ class zmqDealer:
         packet = self.connection.recv_multipart()
         data = []
         for part in packet:
-            data.append(part.decode("ascii"))
+            try:
+                data.append(part.decode("ascii"))
+            except:
+                data.append("")
         return data
     
     def send(self, data):
         packet = []
         for part in data:
-            packet.append(str(part).encode("utf-8"))
+            try:
+                packet.append(str(part).encode("utf-8"))
+            except:
+                packet.append("".encode("utf-8"))
         self.connection.send_multipart(packet)
