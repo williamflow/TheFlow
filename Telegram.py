@@ -8,6 +8,7 @@ import traceback
 from Database import Database
 from Config import HOST, USER, PASSWD, DATABASE, TGCONN, TGCHATS, TOKEN, TGIDENTITY
 import Flowctl
+import os
 
 class Telegram:
     def __init__(self, host, user, passwd, database, conntable, chattable, token, identity):
@@ -98,10 +99,28 @@ class Telegram:
             traceback.print_exc()
         
     def flow(self, update):
-        text = update.message.text
         chatid = update.message.chat.id
-        print("TO FLOW: ", chatid, " text ", text)
-        self.node.send([chatid, "text", text])
+        try:
+            update.message.video.get_file.download()
+            video = update.message.video.get_file.file_path
+            mvvideo=video
+            i=0
+            while os.path.isfile("data/"+mvvideo):
+                i = i+1
+                mvvideo = str(i)+video
+            os.rename(video, "data/"+mvvideo)
+            print("TO FLOW VIDEO:", mvvideo)
+            self.node.send([chatid, "video", mvvideo])
+            return
+        except:
+            return
+        try:
+            text = update.message.text
+            print("TO FLOW: ", chatid, " text ", text)
+            self.node.send([chatid, "text", text])
+            return
+        except:
+            return
     
     def callbackin(self):
         while True:
@@ -111,7 +130,11 @@ class Telegram:
                 if data[-2] == "send_text":
                     self.send(data[-3], data[-1])
                 elif data[-2] == "send_photo":
-                    self.sendphoto(data[-3], data[-1])
+                    photo = "data/"+os.path.basename(data[-1])
+                    self.sendphoto(data[-3], photo)
+                elif data[-2] == "send_audio":
+                    audio = "data/"+os.path.basename(data[-1])
+                    self.sendaudio(data[-3], audio)
     
     def send(self, chatid, message):
         self.bot.send_message(int(chatid), str(message))
@@ -119,6 +142,13 @@ class Telegram:
     def sendphoto(self, chatid, filename):
         try:
             self.bot.send_photo(int(chatid), open(str(filename), "rb"))
+            return True
+        except:
+            return False
+        
+    def sendaudio(self, chatid, filename):
+        try:
+            self.bot.send_audio(int(chatid), open(str(filename), "rb"))
             return True
         except:
             return False

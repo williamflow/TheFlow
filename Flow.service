@@ -8,7 +8,7 @@ Type=simple
 User=flow
 Group=flow
 WorkingDirectory=/home/flow/TheFlow
-ExecStart=/home/flow/TheFlow/flow_start.sh
+ExecStart=/home/flow/TheFlow/Flow
 Restart=always
 Environment=USER=flow HOME=/home/flow
 
