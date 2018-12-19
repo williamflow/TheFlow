@@ -25,7 +25,6 @@ class Telegram:
         self.updater.start_polling()
         
     def callbackout(self, bot, update):
-        print(update)
         try:
             text = update.message.text.split(" ")
             chatid = update.message.chat.id
