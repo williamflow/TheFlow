@@ -125,16 +125,20 @@ class Telegram:
     def callbackin(self):
         while True:
             data = self.node.receive()
+            print("FROM FLOW", data)
             if len(data) > 2:
-                print("TO TG: ", data[-3:])
-                if data[-2] == "send_text":
-                    self.send(data[-3], data[-1])
-                elif data[-2] == "send_photo":
-                    photo = "data/"+os.path.basename(data[-1])
-                    self.sendphoto(data[-3], photo)
-                elif data[-2] == "send_audio":
-                    audio = "data/"+os.path.basename(data[-1])
-                    self.sendaudio(data[-3], audio)
+                chatid = data[0]
+                cmd = data[1]
+                body = data[-1]
+                print("TO TG: ", data)
+                if cmd == "send_text":
+                    self.send(chatid, body)
+                elif cmd == "send_photo":
+                    photo = "data/"+os.path.basename(body)
+                    self.sendphoto(chatid, photo)
+                elif cmd == "send_audio":
+                    audio = "data/"+os.path.basename(body)
+                    self.sendaudio(chatid, audio)
     
     def send(self, chatid, message):
         self.bot.send_message(int(chatid), str(message))

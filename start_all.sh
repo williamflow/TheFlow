@@ -1,36 +1,36 @@
 #!/bin/bash
 
-FLOWDIR=/home/flow/TheFlow
+cd /home/flow/TheFlow
 
 function start {
-	$FLOWDIR/Flow >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! > $FLOWDIR/pids
+	./Flow >>stdout.log 2>>stderr.log &
+        echo $! > pids
 #        disown
-        $FLOWDIR/Equal.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./Equal.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
-        $FLOWDIR/FFMPEG.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./FFMPEG.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
-        $FLOWDIR/Link.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./Link.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
-        $FLOWDIR/Tarot.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./Tarot.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
-        $FLOWDIR/Youtube.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./Youtube.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
-        $FLOWDIR/Telegram.py >>$FLOWDIR/stdout.log 2>>$FLOWDIR/stderr.log &
-        echo $! >> $FLOWDIR/pids
+        ./Telegram.py >>stdout.log 2>>stderr.log &
+        echo $! >> pids
 #        disown
 }
 
 function stop {
-	for pid in $(cat $FLOWDIR/pids) ; do
+	for pid in $(cat pids) ; do
             kill -9 $pid
         done
-        rm $FLOWDIR/pids
+        rm pids
 }
 
 case "$1" in
