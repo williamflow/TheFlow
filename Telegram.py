@@ -152,9 +152,12 @@ class Telegram:
         
     def sendaudio(self, chatid, filename):
         try:
-            self.bot.send_audio(int(chatid), open(str(filename), "rb"))
+            print("Send audio ", filename)
+            self.bot.send_audio(int(chatid), open(str(filename), "rb"), timeout=100)
+            os.remove(filename)
             return True
         except:
+            traceback.print_exc()
             return False
         
     def getChats(self, fromid):
@@ -181,5 +184,4 @@ class FilterNull(BaseFilter):
     def filter(self, message):
         return True
         
-if __name__ == "__main__":
-    Telegram(HOST, USER, PASSWD, DATABASE, TGCONN, TGCHATS, TOKEN, TGIDENTITY)
+tg=Telegram(HOST, USER, PASSWD, DATABASE, TGCONN, TGCHATS, TOKEN, TGIDENTITY)
